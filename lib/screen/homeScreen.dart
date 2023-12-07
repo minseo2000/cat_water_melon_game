@@ -360,7 +360,7 @@ class _HomePageState extends State<HomePage> {
 
     paintList=[paint1, paint2];
     ball = myBall(
-        xPoint: 15git0,
+        xPoint: 15,
         yPoint: 0,
         xVelocity: 0,
         yVelocity: 0,
