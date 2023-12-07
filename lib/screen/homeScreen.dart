@@ -1,3 +1,5 @@
+import 'package:easy_physics_2d/gravity_field.dart';
+import 'package:easy_physics_2d/objects.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
@@ -62,9 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         )
                       )
                     ),
-                    child: GameWidget(
-                      game: MyGame(),
-                    ),
+                    child: HomePage()
                   ),
                 ),
                 Expanded(
@@ -152,7 +152,6 @@ class MyGame extends FlameGame with TapCallbacks, DragCallbacks, HasCollisionDet
 
   }
 }
-
 class MyDraggableImage extends SpriteComponent with HasGameRef<MyGame>, DragCallbacks, TapCallbacks, CollisionCallbacks {
 
   List<String> imgList = [
@@ -186,7 +185,7 @@ class MyDraggableImage extends SpriteComponent with HasGameRef<MyGame>, DragCall
     }
     print(random_num);
     add(CircleHitbox());
-
+    print(this.getSize());
   }
   double getSize(){
     return imgSize/2;
@@ -216,17 +215,18 @@ class MyDraggableImage extends SpriteComponent with HasGameRef<MyGame>, DragCall
     if(isCollide) {
       // 충돌 방지를 위한 위치 조정
       // 충돌 방지를 위한 위치 조정
-      Vector2 collisionDirection = (common.position + position).normalized();
-      common.position.add(collisionDirection * 10); // 예시: 10 픽셀만큼 밀어냄
-      // 화면 경계 처리
-      if (position.x < size.x / 2) {
-        position.x = size.x / 2;
-        speedX = -speedX; // 반대 방향으로 튕김
-      }
-      if (position.x > gameRef.size.x - size.x / 2) {
-        position.x = gameRef.size.x - size.x / 2;
-        speedX = -speedX; // 반대 방향으로 튕김
-      }
+      // 회전 속도 설정
+      double rotationSpeed = 0.1; // 회전 속도 조정 필요
+      common.angle += speedX * rotationSpeed * dt; // X축 속도에 비례하여 회전
+      speedX = 30;
+      speedY = -0.5;
+      speedY += gravity * dt; // 중력에 의한 Y축 속도 증가
+      speedX *= friction; // 마찰에 의한 속도 감소
+      common.position.y += speedY * dt;
+      common.position.x += speedX * dt;
+
+      // X 좌표가 화면을 벗어나지 않도록 조정
+      position.x = position.x.clamp(0 + size.x / 2, gameRef.size.x - size.x / 2);
 
       // 바닥에 닿으면 멈춤
       if (position.y > gameRef.size.y - size.y / 2) {
@@ -245,7 +245,19 @@ class MyDraggableImage extends SpriteComponent with HasGameRef<MyGame>, DragCall
     super.onCollision(intersectionPoints, other);
 
     if(isCollide == false){
-      isCollide = true;
+      if(getSize() + common.getSize() >= 100){
+        print(this.getSize() + common.getSize());
+        isCollide = true;
+      }else if(getSize() + common.getSize() >= 75){
+        print(this.getSize() + common.getSize());
+        isCollide = true;
+      }else if(getSize() + common.getSize() >= 25){
+        print(this.getSize() + common.getSize());
+        isCollide = true;
+      }
+      else{
+        isCollide = false;
+      }
     }else{
       isCollide = false;
     }
@@ -253,4 +265,170 @@ class MyDraggableImage extends SpriteComponent with HasGameRef<MyGame>, DragCall
 
     // 충돌 발생 시 수행할 작업
   }
+}
+
+
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+
+  double sliderValue = 1000;
+
+  Paint paint1 = Paint()
+    ..color = Color(0xff263e63)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+
+  Paint paint2 = Paint()
+    ..color = Color(0xff15693b)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+
+  List<Paint> paintList = [];
+  List<dynamic> objList = [];
+
+  Path draw1 = Path();
+  Path draw2 = Path();
+
+  Path draw3 = Path();
+  Path draw4 = Path();
+
+  var ball;
+  var ball2;
+  var ball3;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    for (double i = 0; i < 20 - 1; i++) {
+      draw1.arcTo(
+          Rect.fromCircle(
+            radius: i,
+            center: Offset(
+              0,
+              0,
+            ),
+          ),
+          0 ,
+          (1.5 * pi),
+          true);
+
+      draw2.arcTo(
+          Rect.fromCircle(
+            radius: i,
+            center: Offset(
+              0,
+              0,
+            ),
+          ),
+          1.5 * pi ,
+          0.5 * pi,
+          true);
+
+      draw3.arcTo(
+          Rect.fromCircle(
+            radius: i,
+            center: Offset(
+              0,
+              0,
+            ),
+          ),
+          0 ,
+          (1.5 * pi),
+          true);
+
+      draw4.arcTo(
+          Rect.fromCircle(
+            radius: i,
+            center: Offset(
+              0,
+              0,
+            ),
+          ),
+          1.5 * pi ,
+          0.5 * pi,
+          true);
+    }
+
+    paintList=[paint1, paint2];
+    ball = myBall(
+        xPoint: 15git0,
+        yPoint: 0,
+        xVelocity: 0,
+        yVelocity: 0,
+        ballRadius: 30,
+        ballMass: 0.5,
+        angularVelocity: 0,
+        ballPaint: paintList
+    );
+
+
+
+
+
+
+    objList = [ball];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //print(objList.length);
+    return Scaffold(
+      body: _buldBody(),
+    );
+  }
+
+  Widget _buldBody() {
+    //print(ball.xPos);
+
+
+
+    return Container(
+
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text(
+              "Flutter Physics",
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 40,
+                  color: Colors.black45),
+            ),
+
+            Container(
+              child: GravityField(
+                objects: objList,
+                gravity: 720,
+                mapX: 350,
+                mapY: 500,
+                mapColor: colorLibrary.mapColor,
+
+              ),
+              padding: EdgeInsets.all(1),
+            ),
+
+
+
+          ],
+        ),
+      )
+    );
+  }
+}
+
+class colorLibrary {
+  static Color mainColor2 = const Color.fromARGB(255, 255, 248, 235);
+  static Color mapColor = const Color(0xffefe0c3);
+  static Color mainColor = const Color.fromARGB(255, 214, 237, 255);
+  static Color buttonColor = const Color(0xffffd6a9);
 }
